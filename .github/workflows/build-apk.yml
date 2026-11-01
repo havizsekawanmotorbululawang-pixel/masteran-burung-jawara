@@ -1,0 +1,53 @@
+
+name: Build Masteran Burung Premium APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Extract project ZIP
+        run: |
+          ZIP_FILE=$(find . -maxdepth 2 -name 'Masteran_Burung_Premium_Project.zip' | head -n 1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "File ZIP proyek tidak ditemukan"
+            exit 1
+          fi
+          mkdir -p extracted
+          unzip -q "$ZIP_FILE" -d extracted
+
+      - name: Build debug APK
+        run: |
+          GRADLEW=$(find extracted -type f -name gradlew | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "File gradlew tidak ditemukan"
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$GRADLEW")
+          cd "$PROJECT_DIR"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Masteran-Burung-Premium-APK
+          path: extracted/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
