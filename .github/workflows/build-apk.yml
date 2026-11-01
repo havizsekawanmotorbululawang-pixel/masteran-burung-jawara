@@ -4,14 +4,15 @@ name: Build Masteran Burung Jawara APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Java
@@ -23,17 +24,17 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Gradle
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Extract project
         run: |
-          ZIP_FILE=$(find . -maxdepth 2 -type f -name 'Masteran_Burung_Jawara_Project.zip' | head -n 1)
+          ZIP_FILE=$(find . -type f -name 'Masteran_Burung_Jawara_Project.zip' | head -n 1)
           if [ -z "$ZIP_FILE" ]; then
             echo "ZIP proyek tidak ditemukan"
             exit 1
@@ -45,7 +46,7 @@ jobs:
         run: |
           PROJECT_DIR=$(find source -type f -name settings.gradle.kts -printf '%h\n' | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
-            echo "File settings.gradle.kts tidak ditemukan"
+            echo "File pengaturan Gradle tidak ditemukan"
             exit 1
           fi
           cd "$PROJECT_DIR"
