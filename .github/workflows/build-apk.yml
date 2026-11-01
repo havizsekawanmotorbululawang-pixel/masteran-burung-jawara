@@ -1,17 +1,17 @@
 
-name: Build Masteran Burung Premium APK
+name: Build Masteran Burung Jawara APK
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Java
@@ -20,34 +20,40 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Extract project ZIP
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extract project
         run: |
-          ZIP_FILE=$(find . -maxdepth 2 -name 'Masteran_Burung_Premium_Project.zip' | head -n 1)
+          ZIP_FILE=$(find . -maxdepth 2 -type f -name 'Masteran_Burung_Jawara_Project.zip' | head -n 1)
           if [ -z "$ZIP_FILE" ]; then
-            echo "File ZIP proyek tidak ditemukan"
+            echo "ZIP proyek tidak ditemukan"
             exit 1
           fi
-          mkdir -p extracted
-          unzip -q "$ZIP_FILE" -d extracted
+          mkdir -p source
+          unzip -q "$ZIP_FILE" -d source
 
-      - name: Build debug APK
+      - name: Build APK
         run: |
-          GRADLEW=$(find extracted -type f -name gradlew | head -n 1)
-          if [ -z "$GRADLEW" ]; then
-            echo "File gradlew tidak ditemukan"
+          PROJECT_DIR=$(find source -type f -name settings.gradle.kts -printf '%h\n' | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "File settings.gradle.kts tidak ditemukan"
             exit 1
           fi
-          PROJECT_DIR=$(dirname "$GRADLEW")
           cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Masteran-Burung-Premium-APK
-          path: extracted/**/build/outputs/apk/debug/*.apk
+          name: Masteran-Burung-Jawara-APK
+          path: source/**/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
